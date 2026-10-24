@@ -1,3 +1,4 @@
+from graph import SokBotGraph
 import time
 
 
@@ -7,6 +8,11 @@ class SokoBot:
         # Default stupid behavior: Think (sleep) for 3 seconds, and then return a
         # sequence
         # that just moves left and right repeatedly.
+
+        graph = SokBotGraph()
+
+        graph.convertDataToGraph(mapData, itemsData)
+
         try:
             time.sleep(3)
         except Exception as ex:
