@@ -59,7 +59,7 @@ class SokBotGraph:
                     # Check if Neighbor Node is BOX
                     if graph.nodes[neighbor]['tileType'] == TileType.BOX:
                         cost = 2
-                    graph.add_edge((x,y), neighbor, cost=cost)
+                    graph.add_edge((x,y), neighbor, weight=cost)
 
 
 
