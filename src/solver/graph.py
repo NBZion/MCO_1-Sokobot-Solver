@@ -2,10 +2,70 @@
 # All the Graph Shenanigans, Will be using NetworkX for graph implementation
 # Also where Heuristics and Costs will be Managed.
 import networkx as nx
+from enum import Enum
 
+class TileType(Enum):
+    EMPTY = 0
+    BOX = 1
+    PLAYER = 2
+    GOAL = 3
+    WALL = 4
 
 class SokBotGraph:
-    graph = nx.Graph
+    graph = nx.Graph()
+
+    # Private Helper Function to Create Node
+    def __createNode(self, mapData, itemsData):
+        # Create Nodes
+        for row in range(len(mapData)):
+           for column in range(len(mapData[row])):
+
+             position = (column, row)
+             currentTileType:TileType = TileType.EMPTY
+
+             # HUERISTIC CALCULATION HERE
+             h = 0
+
+             if(mapData[row][column] != '#' and mapData[row][column] != '.'):
+                 match itemsData[row][column]:
+                     case ' ':
+                         currentTileType = TileType.EMPTY
+                     case '@':
+                         currentTileType = TileType.PLAYER
+                     case '$':
+                         currentTileType = TileType.BOX
+             else: # If mapData is a wall
+                     if mapData[row][column] == '#':
+                         currentTileType = TileType.WALL
+                     else:
+                         currentTileType = TileType.GOAL
+             self.graph.add_node(position, hue=h, tileType = currentTileType)
+
+    # Private Helper Function to Generate Edges
+    def __generateEdges(self, graph:nx.Graph):
+        for node in graph.nodes(data=True):
+            x,y = node[0]
+            cost = 1
+
+            neighbors = [
+                (x, y-1),
+                (x, y+1),
+                (x-1,y),
+                (x+1,y)
+            ]
+
+            for neighbor in neighbors:
+                if graph.has_node(neighbor):
+                    # Check if Neighbor Node is BOX
+                    if graph.nodes[neighbor]['tileType'] == TileType.BOX:
+                        cost = 2
+                    graph.add_edge((x,y), neighbor, cost=cost)
+
+
 
     def convertDataToGraph(self, mapData, itemsData):
-        pass
+        # Create Node
+        self.__createNode(mapData, itemsData)
+
+        # Generate Edges
+        self.__generateEdges(self.graph)
