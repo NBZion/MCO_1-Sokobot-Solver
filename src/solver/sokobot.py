@@ -16,11 +16,11 @@ class SokoBot:
         graph.convertDataToGraph(mapData, itemsData)
 
         # Draw nodes and edges
-        nx.draw(graph.graph, with_labels=True, node_color='skyblue', node_size=500)
+#        nx.draw(graph.graph, with_labels=True, node_color='skyblue', node_size=500)
 
         # Displays an interactive desktop GUI window
-        plt.title("2D Grid Graph")
-        plt.show()
+#        plt.title("2D Grid Graph")
+#        plt.show()
 
         try:
             time.sleep(3)

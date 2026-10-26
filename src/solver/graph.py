@@ -2,6 +2,7 @@
 # All the Graph Shenanigans, Will be using NetworkX for graph implementation
 # Also where Heuristics and Costs will be Managed.
 import networkx as nx
+from collections import deque # For Queues
 from enum import Enum
 
 class TileType(Enum):
@@ -46,6 +47,7 @@ class SokBotGraph:
                             currentTileType = TileType.WALL
                         else:
                             currentTileType = TileType.GOAL
+                            print(position)
                             self.goalsPosition.append(position)
 
                 # EXPERIMENTAL
@@ -54,10 +56,6 @@ class SokBotGraph:
                     continue
                 self.graph.add_node(position, hue=h, tileType = currentTileType)
 
-    # Private Helper Function to Overwrite Box Positions For Hueristic Calculation
-
-    def __updateBoxesPosition(self, boxesPosition: list[tuple]):
-        pass
 
     # Private Helper Function to Generate Edges
     def __generateEdges(self, graph:nx.Graph):
@@ -81,10 +79,26 @@ class SokBotGraph:
 
 
     # Prepare functions to get Hueristics for BFS
-    def getHue_bfs():
-        pass
+    def getHue_bfs(self, goalPosition: tuple): # Returns List of list[(position),hueristic]
+        queue = deque()
+        distances = {}
 
-    def getHue_man():
+        distances[goalPosition] = 0
+        queue.append(goalPosition)
+
+        while queue:
+            currentNode = queue.popleft()
+            currentDistance = distances[currentNode]
+
+            #  Get Neighbors
+            for neighbor in self.graph.neighbors(currentNode):
+                if not neighbor in distances:
+                    distances[neighbor] = currentDistance + 1
+                    queue.append(neighbor)
+
+        return distances
+
+    def getHue_man(self):
         pass
 
     def convertDataToGraph(self, mapData, itemsData):
@@ -93,3 +107,8 @@ class SokBotGraph:
 
         # Generate Edges
         self.__generateEdges(self.graph)
+
+        # DEBUG GETHUE_BFS
+        # GOAL POSITIONS FOR 1 (3,4) (8,4)
+        # print(self.graph.neighbors((3,4)))
+        print(self.getHue_bfs((3,4)))
