@@ -47,7 +47,6 @@ class SokBotGraph:
                             currentTileType = TileType.WALL
                         else:
                             currentTileType = TileType.GOAL
-                            print(position)
                             self.goalsPosition.append(position)
 
                 # EXPERIMENTAL
