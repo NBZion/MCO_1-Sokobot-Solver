@@ -2,7 +2,7 @@ from src.solver.graph import SokBotGraph
 import networkx as nx
 import matplotlib.pyplot as plt
 import src.gui.game
-import time
+from time import perf_counter
 
 class State:
     def __init__(self, player_pos: tuple[int, int], boxes_pos: list[(int, int)]):
@@ -43,6 +43,7 @@ class SokoBot:
         self.load_map_deadspace(mapData, width, height)
 
         # Get initial player position and every box position in the map
+        start_time = perf_counter()
         for col in range(len(itemsData)):
             for row in range(len(itemsData[col])): # read the itemsData and check for player and boxes
                 if(itemsData[col][row] == '@'):
@@ -50,15 +51,36 @@ class SokoBot:
                 elif(itemsData[col][row] == '$'):
                     init_boxes_pos.append((col, row))
 
+        end_time = perf_counter()
+        total_time = end_time - start_time
+        print(f"Item Data Time: {total_time:.6f} seconds")
+
+
         # Get every goal position in the map
+        start_time = perf_counter()
         for col in range(len(mapData)):
             for row in range(len(mapData[col])):
                 if(mapData[col][row] == '.'):
                     self.goals_pos.append((col, row))
 
+        end_time = perf_counter()
+        total_time = end_time - start_time
+        print(f"Goal Data Time: {total_time:.6f} seconds")
+
         # For every goal position, get the minimum distance from each position in the graph
+        start_time = perf_counter()
+        g = 0
         for goal in self.goals_pos:
+            g += 1
+            start_time_g = perf_counter()
             self.minimum_distance_goals[goal] = graph.getHue_bfs((goal[0], goal[1]))
+            end_time_g = perf_counter()
+            total_time = end_time_g - start_time_g
+            print(g)
+            print(f"nd Goal BFS Time: {total_time:.6f} seconds")
+        end_time = perf_counter()
+        total_time = end_time - start_time
+        print(f"All Goals Data Time: {total_time:.6f} seconds")
 
         # Set initial states and starting node
         initial_state = State(init_player_pos, init_boxes_pos)
@@ -104,6 +126,7 @@ class SokoBot:
 
     def __insertToFrontier(self, node: Node):
 
+        start_time = perf_counter()
         # GO THROUGH STATES
         sorted_boxes_pos = sorted(node.state.boxes_pos)
         node.state.redefineBoxes(sorted_boxes_pos)
@@ -118,29 +141,43 @@ class SokoBot:
                 self.frontier.insert(n, node)
                 return
         self.frontier.append(node)
+
+        end_time = perf_counter()
+        total_time = end_time - start_time
+        print(f"Frontier Append Time: {total_time:.6f} seconds")
         return
 
 
 
 
     def __get_h_of_state(self, boxes_pos):
+        start_time = perf_counter()
         h = 0
         for box_pos in boxes_pos:
             h += min([self.minimum_distance_goals[goal_pos][box_pos] for goal_pos in self.goals_pos])
             pass
+
+        end_time = perf_counter()
+        total_time = end_time - start_time
+        print(f"Heuristic of State Retrieval Time: {total_time:.6f} seconds")
         return h
-
-
-        pass
 
 
 
 
     def __checkGoal(self, state: State, mapData) -> bool:
-        for box in state.boxes_pos:
-            if mapData[state.player_pos[0]][state.player_pos[1]] != '.':
-                return False
-        return True
+        returnValue = False
+        for goal in self.goals_pos:
+            for box in state.boxes_pos:
+                if box != goal: 
+                    returnValue = False
+                    continue
+                returnValue = True
+                break
+
+        return returnValue
+                
+
         # TODO: Check if every box is in the goal
 
 
@@ -153,6 +190,7 @@ class SokoBot:
 
 
     def load_map_deadspace (self, map_data, width, height):
+        start_time = perf_counter()
         self.deadspace = [[False for _ in range (len(map_data[r]))] for r in range(len(map_data))]
 
         for col in range(len(map_data)):
@@ -208,6 +246,10 @@ class SokoBot:
 
                         for current_row in range (top_row, bottom_row + 1):
                             self.deadspace[col][current_row] = True
+
+        end_time = perf_counter()
+        total_time = end_time - start_time
+        print(f"Deadlock Execution Time: {total_time:.6f} seconds")
 
 
 

@@ -95,8 +95,6 @@ class SokBotGraph:
                     distances[neighbor] = currentDistance + 1
                     queue.append(neighbor)
 
-        print("Distances:")
-        print(distances)
         return distances
 
     def getHue_man(self):
