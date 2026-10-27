@@ -44,18 +44,18 @@ class SokoBot:
         self.deadspace = self.load_map_deadspace(mapData, width, height)
 
         # Get initial player position and every box position in the map
-        for row in range(len(itemsData)):
-            for column in range(len(itemsData[row])): # read the itemsData and check for player and boxes
-                if(itemsData[row][column] == '@'):
-                    init_player_pos = (row, column)
-                elif(itemsData[row][column] == '$'):
-                    init_boxes_pos.append((row, column))
+        for col in range(len(itemsData)):
+            for row in range(len(itemsData[col])): # read the itemsData and check for player and boxes
+                if(itemsData[col][row] == '@'):
+                    init_player_pos = (row, row)
+                elif(itemsData[col][row] == '$'):
+                    init_boxes_pos.append((col, row))
 
         # Get every goal position in the map
-        for row in range(len(mapData)):
-            for column in range(len(mapData[row])):
-                if(mapData[row][column] == '.'):
-                    self.goals_pos.append((row, column))
+        for col in range(len(mapData)):
+            for row in range(len(mapData[col])):
+                if(mapData[col][row] == '.'):
+                    self.goals_pos.append((col, row))
 
         # For every goal position, get the minimum distance from each graph
         for goal in self.goals_pos:
@@ -145,7 +145,7 @@ class SokoBot:
 
 
     def is_block_corner(self, map_data, row: int, col: int) -> bool:
-        return (map_data[row - 1][col] == "#" and map_data[row][col - 1] == "#") or (map_data[row - 1][col] == "#" and map_data[row][col + 1] == "#") or (map_data[row + 1][col] == "#" and map_data[row][col - 1] == "#") or (map_data[row + 1][col] == "#" and map_data[row][col + 1] == "#")
+        return (map_data[col-1][row] == "#" and map_data[col][row-1] == "#") or (map_data[col-1][row] == "#" and map_data[col][row+1] == "#") or (map_data[col+1][row] == "#" and map_data[col][row-1] == "#") or (map_data[col+1][row] == "#" and map_data[col][row+1] == "#")
 
 
 
@@ -153,59 +153,59 @@ class SokoBot:
     def load_map_deadspace (self, map_data, width, height):
         self.deadspace = [[False for _ in range (len(map_data[r]))] for r in range(len(map_data))]
 
-        for row in range(len(map_data)):
-            for col in range(len(map_data[row])): # read the itemsData and check for player and boxes
-                if self.deadspace[row][col]:
+        for col in range(len(map_data)):
+            for row in range(len(map_data[col])): # read the itemsData and check for player and boxes
+                if self.deadspace[col][row]:
                     continue
-                if map_data[row][col] == "#":
-                    self.deadspace[row][col] = True
-                elif map_data[row][col] == ".":
-                    self.deadspace[row][col] = False
+                if map_data[col][row] == "#":
+                    self.deadspace[col][row] = True
+                elif map_data[col][row] == ".":
+                    self.deadspace[col][row] = False
                 elif row > 0 and col > 0 and row < height - 2 and col < width - 2 and self.is_block_corner(map_data, row, col) and map_data[row][col] != ".":
-                    self.deadspace[row][col] = True
+                    self.deadspace[col][row] = True
 
-        for row in range(len(map_data)):
-            for col in range(len(map_data[row])):
-                if(map_data[row][col] == "#" and map_data[row][col] == "."):
+        for col in range(len(map_data)):
+            for row in range(len(map_data[col])):
+                if(map_data[col][row] == "#" and map_data[col][row] == "."):
                     continue
-                elif(self.deadspace[row][col]):
+                elif(self.deadspace[col][row]):
                     continue
-                elif(row > 0 and col > 0 and col < width - 2 and row < height - 2):
-                    if(map_data[row-1][col] == "#" or map_data[row+1][col] == "#"):
+                elif(row > 0 and col > 0 and col < width - 1 and row < height - 1):
+                    if(map_data[col-1][row] == "#" or map_data[col+1][row] == "#"):
 
                         right_col = col
 
-                        while right_col < width - 1 and map_data[row][right_col + 1] != "#" and (map_data[row - 1][right_col] == "#" or map_data[row+1][right_col] == "#") and map_data[row][right_col] != ".":
+                        while right_col < width - 1 and map_data[right_col + 1][row] != "#" and (map_data[right_col][row-1] == "#" or map_data[right_col][row+1] == "#") and map_data[right_col][row] != ".":
                             right_col += 1
-                        if not self.is_block_corner(map_data, row, right_col) or not self.deadspace[row][right_col]:
+                        if not self.is_block_corner(map_data, row, right_col) or not self.deadspace[right_col][row]:
                             continue
 
                         left_col = col
 
-                        while left_col > 0 and map_data[row][col - 1] != "#" and (map_data[row-1][right_col] == "#" or map_data[row+1][left_col] == "#") and map_data[row][left_col] != ".":
+                        while left_col > 0 and map_data[left_col - 1][row] != "#" and (map_data[left_col][row-1] == "#" or map_data[left_col][row+1] == "#") and map_data[left_col][row] != ".":
                             left_col -= 1
-                        if not self.is_block_corner(map_data, row, left_col) or not self.deadspace[row][left_col]:
+                        if not self.is_block_corner(map_data, row, left_col) or not self.deadspace[left_col][row]:
                             continue
 
                         for current_col in range (left_col, right_col + 1):
-                            self.deadspace[row][current_col] = True
+                            self.deadspace[current_col][row] = True
 
-                    if map_data[row][col-1] == "#" or map_data[row][col+1] == "#":
+                    if map_data[col-1][row] == "#" or map_data[col+1][row] == "#":
 
                         top_row = row
-                        while top_row > 0 and map_data[top_row-1][col] != "#" and (map_data[top_row][col-1] == "#" or map_data[top_row][col+1] == "#") and map_data[top_row][col] != ".":
+                        while top_row > 0 and map_data[col][top_row-1] != "#" and (map_data[col-1][top_row] == "#" or map_data[col+1][top_row] == "#") and map_data[col][top_row] != ".":
                             top_row -= 1
-                        if not self.is_block_corner(map_data, top_row, col) or not self.deadspace[top_row][col]:
+                        if not self.is_block_corner(map_data, top_row, col) or not self.deadspace[col][top_row]:
                             continue
 
                         bottom_row = row
-                        while bottom_row < height - 1 and map_data[bottom_row+1][col] != "#" and (map_data[bottom_row][col-1] == "#" or map_data[bottom_row][col+1] == "#") and map_data[bottom_row][col] != ".":
+                        while bottom_row < height - 1 and map_data[col][bottom_row+1] != "#" and (map_data[col-1][bottom_row] == "#" or map_data[col+1][bottom_row] == "#") and map_data[col][bottom_row] != ".":
                             bottom_row += 1
-                        if not self.is_block_corner(map_data, bottom_row, col) or not self.deadspace[bottom_row][col]:
+                        if not self.is_block_corner(map_data, bottom_row, col) or not self.deadspace[col][bottom_row]:
                             continue
 
                         for current_row in range (top_row, bottom_row + 1):
-                            self.deadspace[current_row][col] = True
+                            self.deadspace[col][current_row] = True
 
 
 
