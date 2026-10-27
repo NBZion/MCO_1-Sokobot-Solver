@@ -1,6 +1,5 @@
 from src.solver.graph import SokBotGraph
 import networkx as nx
-import matplotlib.pyplot as plt
 import src.gui.game
 from time import perf_counter
 
@@ -11,6 +10,16 @@ class State:
 
     def redefineBoxes(self, new_boxes_pos: list[(int, int)]):
         self.boxes_pos = new_boxes_pos
+
+    def __eq__(self, other):
+        return self.player_pos == other.player_pos and self.boxes_pos == other.boxes_pos
+
+    def __hash__(self):
+        return hash((
+            self.player_pos,
+            tuple(sorted(self.boxes_pos))
+        ))
+
 
 class Node:
     def __init__(self, state: State, g: int, h: int, p: str):
@@ -28,6 +37,8 @@ class SokoBot:
 
         self.goals_pos = [] # stores every goal's position in the map
         self.deadspace = []
+
+
 
 
     def solveSokobanPuzzle(self, width, height, mapData, itemsData):
@@ -53,7 +64,7 @@ class SokoBot:
 
         end_time = perf_counter()
         total_time = end_time - start_time
-        print(f"Item Data Time: {total_time:.6f} seconds")
+        #print(f"Item Data Time: {total_time:.6f} seconds")
 
 
         # Get every goal position in the map
@@ -65,7 +76,7 @@ class SokoBot:
 
         end_time = perf_counter()
         total_time = end_time - start_time
-        print(f"Goal Data Time: {total_time:.6f} seconds")
+        #print(f"Goal Data Time: {total_time:.6f} seconds")
 
         # For every goal position, get the minimum distance from each position in the graph
         start_time = perf_counter()
@@ -76,11 +87,11 @@ class SokoBot:
             self.minimum_distance_goals[goal] = graph.getHue_bfs((goal[0], goal[1]))
             end_time_g = perf_counter()
             total_time = end_time_g - start_time_g
-            print(g)
-            print(f"nd Goal BFS Time: {total_time:.6f} seconds")
+            #print(g)
+            #print(f"nd Goal BFS Time: {total_time:.6f} seconds")
         end_time = perf_counter()
         total_time = end_time - start_time
-        print(f"All Goals Data Time: {total_time:.6f} seconds")
+        #print(f"All Goals Data Time: {total_time:.6f} seconds")
 
         # Set initial states and starting node
         initial_state = State(init_player_pos, init_boxes_pos)
@@ -90,6 +101,7 @@ class SokoBot:
 
     # 2. Start Exploring the Different States
         while self.frontier:
+            print(not self.frontier)
             node = self.frontier.pop(0)
             state = node.state
 
@@ -103,7 +115,7 @@ class SokoBot:
             for dx, dy, dp in [(1, 0, 'd'), (-1, 0, 'u'), (0, 1, 'r'), (0, -1, 'l')]:
                 # TODO: Check if tile is out of bounds or an impassable object
                 new_player_pos = (state.player_pos[0] + dx, state.player_pos[1] + dy)
-                new_boxes_pos = state.boxes_pos
+                new_boxes_pos = state.boxes_pos.copy()
 
                 if 0 <= new_player_pos[0] < height and 0 <= new_player_pos[1] < width and mapData[new_player_pos[0]][new_player_pos[1]] != '#':
                     if new_player_pos in new_boxes_pos:
@@ -116,8 +128,6 @@ class SokoBot:
                             continue
                     new_state = State(new_player_pos, new_boxes_pos)
                     new_node = Node(new_state, node.g + 1, self.__get_h_of_state(new_boxes_pos), node.p + dp)
-                    print(new_state)
-                    print(new_node)
                     self.__insertToFrontier(new_node)
 
         print("Failure")
@@ -146,7 +156,7 @@ class SokoBot:
 
         end_time = perf_counter()
         total_time = end_time - start_time
-        print(f"Frontier Append Time: {total_time:.6f} seconds")
+        #print(f"Frontier Append Time: {total_time:.6f} seconds")
         return
 
 
@@ -161,31 +171,14 @@ class SokoBot:
 
         end_time = perf_counter()
         total_time = end_time - start_time
-        print(f"Heuristic of State Retrieval Time: {total_time:.6f} seconds")
+        #print(f"Heuristic of State Retrieval Time: {total_time:.6f} seconds")
         return h
 
 
 
 
     def __checkGoal(self, state: State, mapData) -> bool:
-        returnValue = False
-        for goal in self.goals_pos:
-            print("Goal:")
-            print(goal)
-            for box in state.boxes_pos:
-                print("Box")
-                print(box)
-                if box != goal:
-                    returnValue = False
-                    continue
-                returnValue = True
-                break
-            if not returnValue: return returnValue
-
-        return returnValue
-                
-
-        # TODO: Check if every box is in the goal
+        return set(state.boxes_pos) == set(self.goals_pos)
 
 
 
@@ -208,7 +201,7 @@ class SokoBot:
                     self.deadspace[col][row] = True
                 elif map_data[col][row] == ".":
                     self.deadspace[col][row] = False
-                elif row > 0 and col > 0 and row < height - 2 and col < width - 2 and self.is_block_corner(map_data, row, col) and map_data[row][col] != ".":
+                elif row > 0 and col > 0 and row < width - 1 and col < height - 1 and self.is_block_corner(map_data, row, col) and map_data[col][row] != ".":
                     self.deadspace[col][row] = True
 
         for col in range(len(map_data)):
@@ -222,7 +215,7 @@ class SokoBot:
 
                         right_col = col
 
-                        while right_col < width - 1 and map_data[right_col + 1][row] != "#" and (map_data[right_col][row-1] == "#" or map_data[right_col][row+1] == "#") and map_data[right_col][row] != ".":
+                        while right_col < height - 1 and map_data[right_col + 1][row] != "#" and (map_data[right_col][row-1] == "#" or map_data[right_col][row+1] == "#") and map_data[right_col][row] != ".":
                             right_col += 1
                         if not self.is_block_corner(map_data, row, right_col) or not self.deadspace[right_col][row]:
                             continue
@@ -256,7 +249,7 @@ class SokoBot:
 
         end_time = perf_counter()
         total_time = end_time - start_time
-        print(f"Deadlock Execution Time: {total_time:.6f} seconds")
+        #print(f"Deadlock Execution Time: {total_time:.6f} seconds")
 
 
 
