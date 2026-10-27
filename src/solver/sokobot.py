@@ -116,6 +116,8 @@ class SokoBot:
                             continue
                     new_state = State(new_player_pos, new_boxes_pos)
                     new_node = Node(new_state, node.g + 1, self.__get_h_of_state(new_boxes_pos), node.p + dp)
+                    print(new_state)
+                    print(new_node)
                     self.__insertToFrontier(new_node)
 
         print("Failure")
@@ -168,12 +170,17 @@ class SokoBot:
     def __checkGoal(self, state: State, mapData) -> bool:
         returnValue = False
         for goal in self.goals_pos:
+            print("Goal:")
+            print(goal)
             for box in state.boxes_pos:
-                if box != goal: 
+                print("Box")
+                print(box)
+                if box != goal:
                     returnValue = False
                     continue
                 returnValue = True
                 break
+            if not returnValue: return returnValue
 
         return returnValue
                 
