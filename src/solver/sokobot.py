@@ -8,7 +8,6 @@ class State:
     def __init__(self, player_pos: tuple[int, int], boxes_pos: list[(int, int)]):
         self.player_pos = player_pos
         self.boxes_pos = boxes_pos
-        self.deadspace = []
 
     def redefineBoxes(self, new_boxes_pos: list[(int, int)]):
         self.boxes_pos = new_boxes_pos
@@ -28,26 +27,26 @@ class SokoBot:
         self.frontier = [] # stores frontier nodes
 
         self.goals_pos = [] # stores every goal's position in the map
+        self.deadspace = []
 
 
     def solveSokobanPuzzle(self, width, height, mapData, itemsData):
         # Initialize SokoBot graph
         graph = SokBotGraph()
-
         graph.convertDataToGraph(mapData, itemsData)
 
     # 1. Get Initial State and Starting Node
 
         # Initialize intial positions and goal position BFS
-        init_player_pos: tuple[int, int]
-        init_boxes_pos = list((int, int))
-        self.deadspace = self.load_map_deadspace(mapData, width, height)
+        init_player_pos = []
+        init_boxes_pos = []
+        self.load_map_deadspace(mapData, width, height)
 
         # Get initial player position and every box position in the map
         for col in range(len(itemsData)):
             for row in range(len(itemsData[col])): # read the itemsData and check for player and boxes
                 if(itemsData[col][row] == '@'):
-                    init_player_pos = (row, row)
+                    init_player_pos = (col, row)
                 elif(itemsData[col][row] == '$'):
                     init_boxes_pos.append((col, row))
 
@@ -57,9 +56,9 @@ class SokoBot:
                 if(mapData[col][row] == '.'):
                     self.goals_pos.append((col, row))
 
-        # For every goal position, get the minimum distance from each graph
+        # For every goal position, get the minimum distance from each position in the graph
         for goal in self.goals_pos:
-            self.minimum_distance_goals[goal] = graph.getHue_bfs((goal[1], goal[0]))
+            self.minimum_distance_goals[goal] = graph.getHue_bfs((goal[0], goal[1]))
 
         # Set initial states and starting node
         initial_state = State(init_player_pos, init_boxes_pos)
@@ -72,7 +71,9 @@ class SokoBot:
             node = self.frontier.pop(0)
             state = node.state
 
-            if self.__checkGoal(state): return node.s
+            if self.__checkGoal(state, mapData):
+                print("Successful!")
+                return node.p
 
             if state in self.visited_states: continue # Skip the state
             self.visited_states[state] = True
@@ -92,9 +93,10 @@ class SokoBot:
                         if self.deadspace[new_box_pos[0]][new_box_pos[1]]:
                             continue
                     new_state = State(new_player_pos, new_boxes_pos)
-                    new_node = Node(new_state, node.g + 1, self.__get_h_of_state(new_boxes_pos), node.s + dp)
+                    new_node = Node(new_state, node.g + 1, self.__get_h_of_state(new_boxes_pos), node.p + dp)
                     self.__insertToFrontier(new_node)
 
+        print("Failure")
         return None
 
 
@@ -121,10 +123,10 @@ class SokoBot:
 
 
 
-    def __get_h_of_state(self, boxes_pos: list[{int, int}]):
+    def __get_h_of_state(self, boxes_pos):
         h = 0
         for box_pos in boxes_pos:
-            h += min([self.minimum_distance_goals[goal_pos][box_pos[0]][box_pos[1]] for goal_pos in self.goals_pos])
+            h += min([self.minimum_distance_goals[goal_pos][box_pos] for goal_pos in self.goals_pos])
             pass
         return h
 
@@ -206,7 +208,6 @@ class SokoBot:
 
                         for current_row in range (top_row, bottom_row + 1):
                             self.deadspace[col][current_row] = True
-
 
 
 

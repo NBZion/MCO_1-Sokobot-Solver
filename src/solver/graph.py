@@ -24,8 +24,8 @@ class SokBotGraph:
     # Private Helper Function to Create Node
     def __createNode(self, mapData, itemsData):
         # Create Nodes
-        for row in range(len(mapData)):
-            for column in range(len(mapData[row])):
+        for column in range(len(mapData)):
+            for row in range(len(mapData[column])):
 
                 position = (column, row)
                 currentTileType:TileType = TileType.EMPTY
@@ -33,8 +33,8 @@ class SokBotGraph:
                 # HUERISTIC CALCULATION HERE
                 h = 0
 
-                if(mapData[row][column] != '#' and mapData[row][column] != '.'):
-                    match itemsData[row][column]:
+                if(mapData[column][row] != '#' and mapData[column][row] != '.'):
+                    match itemsData[column][row]:
                         case ' ':
                             currentTileType = TileType.EMPTY
                         case '@':
@@ -43,7 +43,7 @@ class SokBotGraph:
                             currentTileType = TileType.BOX
                             self.currentBoxPosition.append(position)
                 else: # If mapData is a wall
-                        if mapData[row][column] == '#':
+                        if mapData[column][row] == '#':
                             currentTileType = TileType.WALL
                         else:
                             currentTileType = TileType.GOAL
@@ -95,6 +95,8 @@ class SokBotGraph:
                     distances[neighbor] = currentDistance + 1
                     queue.append(neighbor)
 
+        print("Distances:")
+        print(distances)
         return distances
 
     def getHue_man(self):
