@@ -34,6 +34,8 @@ class SokoBot:
         # Initialize SokoBot graph
         graph = SokBotGraph()
 
+        graph.convertDataToGraph(mapData, itemsData)
+
     # 1. Get Initial State and Starting Node
 
         # Initialize intial positions and goal position BFS
@@ -48,7 +50,7 @@ class SokoBot:
                     init_player_pos = (row, column)
                 elif(itemsData[row][column] == '$'):
                     init_boxes_pos.append((row, column))
-        
+
         # Get every goal position in the map
         for row in range(len(mapData)):
             for column in range(len(mapData[row])):
@@ -150,7 +152,7 @@ class SokoBot:
 
     def load_map_deadspace (self, map_data, width, height):
         self.deadspace = [[False for _ in range (len(map_data[r]))] for r in range(len(map_data))]
-        
+
         for row in range(len(map_data)):
             for col in range(len(map_data[row])): # read the itemsData and check for player and boxes
                 if self.deadspace[row][col]:
@@ -161,7 +163,7 @@ class SokoBot:
                     self.deadspace[row][col] = False
                 elif row > 0 and col > 0 and row < height - 2 and col < width - 2 and self.is_block_corner(map_data, row, col) and map_data[row][col] != ".":
                     self.deadspace[row][col] = True
-        
+
         for row in range(len(map_data)):
             for col in range(len(map_data[row])):
                 if(map_data[row][col] == "#" and map_data[row][col] == "."):
@@ -170,14 +172,14 @@ class SokoBot:
                     continue
                 elif(row > 0 and col > 0 and col < width - 2 and row < height - 2):
                     if(map_data[row-1][col] == "#" or map_data[row+1][col] == "#"):
-                        
-                        right_col = col                                                                        
-                        
+
+                        right_col = col
+
                         while right_col < width - 1 and map_data[row][right_col + 1] != "#" and (map_data[row - 1][right_col] == "#" or map_data[row+1][right_col] == "#") and map_data[row][right_col] != ".":
                             right_col += 1
                         if not self.is_block_corner(map_data, row, right_col) or not self.deadspace[row][right_col]:
                             continue
-                        
+
                         left_col = col
 
                         while left_col > 0 and map_data[row][col - 1] != "#" and (map_data[row-1][right_col] == "#" or map_data[row+1][left_col] == "#") and map_data[row][left_col] != ".":
@@ -189,22 +191,22 @@ class SokoBot:
                             self.deadspace[row][current_col] = True
 
                     if map_data[row][col-1] == "#" or map_data[row][col+1] == "#":
-                        
+
                         top_row = row
                         while top_row > 0 and map_data[top_row-1][col] != "#" and (map_data[top_row][col-1] == "#" or map_data[top_row][col+1] == "#") and map_data[top_row][col] != ".":
                             top_row -= 1
                         if not self.is_block_corner(map_data, top_row, col) or not self.deadspace[top_row][col]:
                             continue
-                        
+
                         bottom_row = row
                         while bottom_row < height - 1 and map_data[bottom_row+1][col] != "#" and (map_data[bottom_row][col-1] == "#" or map_data[bottom_row][col+1] == "#") and map_data[bottom_row][col] != ".":
                             bottom_row += 1
                         if not self.is_block_corner(map_data, bottom_row, col) or not self.deadspace[bottom_row][col]:
-                            continue 
+                            continue
 
                         for current_row in range (top_row, bottom_row + 1):
                             self.deadspace[current_row][col] = True
-        
+
 
 
 
