@@ -23,34 +23,16 @@ class Node:
 class SokoBot:
 
     def __init__(self):
-        self.minimum_distance_goals = {}
+        self.minimum_distance_goals = {} # stores the distance from each in the map to every goal
         self.visited_states = {} # stores visited states
         self.frontier = [] # stores frontier nodes
 
-        self.goals_pos = []
+        self.goals_pos = [] # stores every goal's position in the map
 
 
     def solveSokobanPuzzle(self, width, height, mapData, itemsData):
-        # YOU NEED TO REWRITE THE IMPLEMENTATION OF THIS METHOD TO MAKE THE BOT SMARTER
-        # Default stupid behavior: Think (sleep) for 3 seconds, and then return a
-        # sequence
-        # that just moves left and right repeatedly.
-
         # Initialize SokoBot graph
         graph = SokBotGraph()
-
-        # graph.convertDataToGraph(mapData, itemsData)
-
-        # Draw nodes and edges
-#        nx.draw(graph.graph, with_labels=True, node_color='skyblue', node_size=500)
-
-        # Displays an interactive desktop GUI window
-#        plt.title("2D Grid Graph")
-#        plt.show()
-
-
-    # A STAR IMPLEMENTATION
-    # NOTE: State contains player position and boxes position, while node contains State, g, h, and s
 
     # 1. Get Initial State and Starting Node
 
@@ -59,20 +41,23 @@ class SokoBot:
         init_boxes_pos = list((int, int))
         self.deadspace = self.load_map_deadspace(mapData, width, height)
 
+        # Get initial player position and every box position in the map
         for row in range(len(itemsData)):
             for column in range(len(itemsData[row])): # read the itemsData and check for player and boxes
                 if(itemsData[row][column] == '@'):
-                    init_player_pos = {row, column}
+                    init_player_pos = (row, column)
                 elif(itemsData[row][column] == '$'):
-                    init_boxes_pos.append({row, column})
-
+                    init_boxes_pos.append((row, column))
+        
+        # Get every goal position in the map
         for row in range(len(mapData)):
             for column in range(len(mapData[row])):
                 if(mapData[row][column] == '.'):
-                    self.goals_pos.append({row, column})
+                    self.goals_pos.append((row, column))
 
+        # For every goal position, get the minimum distance from each graph
         for goal in self.goals_pos:
-            self.minimum_distance_goals[goal] = graph.getHue_bfs(tuple(goal[0], goal[1]))
+            self.minimum_distance_goals[goal] = graph.getHue_bfs((goal[0], goal[1]))
 
         # Set initial states and starting node
         initial_state = State(init_player_pos, init_boxes_pos)
@@ -80,6 +65,7 @@ class SokoBot:
 
         self.__insertToFrontier(starting_node)
 
+    # 2. Start Exploring the Different States
         while self.frontier:
             node = self.frontier.pop(0)
             state = node.state
@@ -141,9 +127,6 @@ class SokoBot:
         return h
 
 
-
-
-    def __get_danger_zones():
         pass
 
 
@@ -246,3 +229,5 @@ class SokoBot:
     # r: self.execute_move(3) -> column++
 
 # 3. {0, 0} is always at the top left
+
+# 4. State contains player position and boxes position, while node contains State, g, h, and s
