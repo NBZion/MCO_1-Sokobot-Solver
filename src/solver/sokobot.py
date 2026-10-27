@@ -59,7 +59,7 @@ class SokoBot:
 
         # For every goal position, get the minimum distance from each graph
         for goal in self.goals_pos:
-            self.minimum_distance_goals[goal] = graph.getHue_bfs((goal[0], goal[1]))
+            self.minimum_distance_goals[goal] = graph.getHue_bfs((goal[1], goal[0]))
 
         # Set initial states and starting node
         initial_state = State(init_player_pos, init_boxes_pos)
