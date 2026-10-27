@@ -110,4 +110,4 @@ class SokBotGraph:
         # DEBUG GETHUE_BFS
         # GOAL POSITIONS FOR 1 (3,4) (8,4)
         # print(self.graph.neighbors((3,4)))
-        print(self.getHue_bfs((3,4)))
+        # print(self.getHue_bfs((3,4)))
