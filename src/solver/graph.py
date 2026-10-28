@@ -17,9 +17,6 @@ class SokBotGraph:
     goalsPosition = None
     currentBoxPosition = None
 
-    def __init__(self):
-        self.goalsPosition = []
-        self.currentBoxPosition = []
 
     # Private Helper Function to Create Node
     def __createNode(self, mapData, itemsData):
@@ -41,13 +38,11 @@ class SokBotGraph:
                             currentTileType = TileType.PLAYER
                         case '$':
                             currentTileType = TileType.BOX
-                            self.currentBoxPosition.append(position)
                 else: # If mapData is a wall
                         if mapData[column][row] == '#':
                             currentTileType = TileType.WALL
                         else:
                             currentTileType = TileType.GOAL
-                            self.goalsPosition.append(position)
 
                 # EXPERIMENTAL
                 # Dont create State if it's a wall
@@ -60,7 +55,6 @@ class SokBotGraph:
     def __generateEdges(self, graph:nx.Graph):
         for node in graph.nodes(data=True):
             x,y = node[0]
-            cost = 1
 
             neighbors = [
                 (x, y-1),
@@ -71,10 +65,7 @@ class SokBotGraph:
 
             for neighbor in neighbors:
                 if graph.has_node(neighbor):
-                    # Check if Neighbor Node is BOX
-                    if graph.nodes[neighbor]['tileType'] == TileType.BOX:
-                        cost = 2
-                    graph.add_edge((x,y), neighbor, weight=cost)
+                    graph.add_edge((x,y), neighbor)
 
 
     # Prepare functions to get Hueristics for BFS
