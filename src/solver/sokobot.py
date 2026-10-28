@@ -121,9 +121,6 @@ class SokoBot:
 
             if node.g != self.best_g[state]: continue
 
-            print(state.player_pos)
-            print(state.boxes_pos)
-
             if self.__checkGoal(state, mapData):
                 print("Successful!")
                 return node.p
