@@ -54,7 +54,6 @@ class SokoBot:
         self.load_map_deadspace(mapData, width, height)
 
         # Get initial player position and every box position in the map
-        start_time = perf_counter()
         for col in range(len(itemsData)):
             for row in range(len(itemsData[col])): # read the itemsData and check for player and boxes
                 if(itemsData[col][row] == '@'):
@@ -62,36 +61,21 @@ class SokoBot:
                 elif(itemsData[col][row] == '$'):
                     init_boxes_pos.append((col, row))
 
-        end_time = perf_counter()
-        total_time = end_time - start_time
-       # print(f"Item Data Time: {total_time:.6f} seconds")
-
-
         # Get every goal position in the map
         start_time = perf_counter()
         for col in range(len(mapData)):
             for row in range(len(mapData[col])):
                 if(mapData[col][row] == '.'):
+                    print("--")
                     self.goals_pos.append((col, row))
+                print(mapData[col][row]);
 
-        end_time = perf_counter()
-        total_time = end_time - start_time
-        #print(f"Goal Data Time: {total_time:.6f} seconds")
 
         # For every goal position, get the minimum distance from each position in the graph
-        start_time = perf_counter()
         g = 0
         for goal in self.goals_pos:
             g += 1
-            start_time_g = perf_counter()
             self.minimum_distance_goals[goal] = graph.getHue_bfs((goal[0], goal[1]))
-            end_time_g = perf_counter()
-            total_time = end_time_g - start_time_g
-            #print(g)
-            #print(f"Goal BFS Time: {total_time:.6f} seconds")
-        end_time = perf_counter()
-        total_time = end_time - start_time
-        #print(f"All Goals Data Time: {total_time:.6f} seconds")
 
         # Set initial states and starting node
         initial_state = State(init_player_pos, init_boxes_pos)
@@ -131,10 +115,6 @@ class SokoBot:
                     new_state = State(new_player_pos, new_boxes_pos)
                     new_node = Node(new_state, node.g + 1, self.__get_h_of_state(new_boxes_pos), node.p + dp)
                     self.__insertToFrontier(new_node)
-            end_time = perf_counter()
-            total_time = end_time - start_time
-            #print(new_state)
-            #print(f"Frontier Travel Time: {total_time:.6f} seconds")
 
 
         print("Failure")
@@ -144,8 +124,6 @@ class SokoBot:
 
 
     def __insertToFrontier(self, node: Node):
-
-        start_time = perf_counter()
         # GO THROUGH STATES
         sorted_boxes_pos = sorted(node.state.boxes_pos)
         node.state.redefineBoxes(sorted_boxes_pos)
@@ -161,24 +139,17 @@ class SokoBot:
                 return
         self.frontier.append(node)
 
-        end_time = perf_counter()
-        total_time = end_time - start_time
-        #print(f"Frontier Append Time: {total_time:.6f} seconds")
         return
 
 
 
 
     def __get_h_of_state(self, boxes_pos):
-        start_time = perf_counter()
         h = 0
         for box_pos in boxes_pos:
             h += min([self.minimum_distance_goals[goal_pos][box_pos] for goal_pos in self.goals_pos])
             pass
 
-        end_time = perf_counter()
-        total_time = end_time - start_time
-        #print(f"Heuristic of State Retrieval Time: {total_time:.6f} seconds")
         return h
 
 
@@ -191,34 +162,25 @@ class SokoBot:
 
 
     def is_block_corner(self, map_data, row: int, col: int) -> bool:
-        print("Case:")
-        print((col, row))
-        print("Symbol to the left:")
-        print(map_data[col-1][row])
-        print("Symbol to the right:")
-        print(map_data[col+1][row])
-        print("Symbol above:")
-        print(map_data[col][row-1])
-        print("Symbol below:")
-        print(map_data[col][row+1])
-        return (map_data[col-1][row] == "#" and map_data[col][row-1] == "#") or (map_data[col-1][row] == "#" and map_data[col][row+1] == "#") or (map_data[col+1][row] == "#" and map_data[col][row-1] == "#") or (map_data[col+1][row] == "#" and map_data[col][row+1] == "#")
+        def wall(r, c):
+            return not (0 <= r < len(map_data) and 0 <= c < len(map_data[r])) or map_data[r][c] == '#'
+        return (wall(col-1, row) or wall(col+1, row)) and (wall(col, row-1) or wall(col, row+1));
 
 
 
 
     def load_map_deadspace (self, map_data, width, height):
-        start_time = perf_counter()
-        self.deadspace = [[False for _ in range (len(map_data[r]))] for r in range(len(map_data))]
+        self.deadspace = [[False for _ in range (len(map_data[c]))] for c in range(len(map_data))]
 
         for col in range(len(map_data)):
-            for row in range(len(map_data[col])): # read the itemsData and check for player and boxes
+            for row in range(len(map_data[col])): 
                 if self.deadspace[col][row]:
                     continue
                 if map_data[col][row] == "#":
                     self.deadspace[col][row] = True
                 elif map_data[col][row] == ".":
                     self.deadspace[col][row] = False
-                elif row > 0 and col > 0 and row < height - 1 and col < width - 1 and self.is_block_corner(map_data, row, col) and map_data[col][row] != ".":
+                elif row > 0 and col > 0 and row < width - 1 and col < height - 1 and self.is_block_corner(map_data, row, col) and map_data[col][row] != ".":
                     self.deadspace[col][row] = True
 
         for col in range(len(map_data)):
@@ -227,18 +189,12 @@ class SokoBot:
                     continue
                 elif(self.deadspace[col][row]):
                     continue
-                elif(row > 0 and col > 0 and col < width - 1 and row < height - 1):
-                    print("Initial check:")
-                    print("-")
-                    print(col)
-                    print(row)
-                    print(map_data[col][row])
-                    print("-")
+                elif(row > 0 and col > 0 and col < height - 1 and row < width - 1):
                     if(map_data[col][row-1] == "#" or map_data[col][row+1] == "#"):
 
                         right_col = col
 
-                        while right_col < width - 1 and map_data[right_col + 1][row] != "#" and (map_data[right_col][row-1] == "#" or map_data[right_col][row+1] == "#") and map_data[right_col][row] != ".":
+                        while right_col < height - 1 and map_data[right_col + 1][row] != "#" and (map_data[right_col][row-1] == "#" or map_data[right_col][row+1] == "#") and map_data[right_col][row] != ".":
                             right_col += 1
                         if not self.is_block_corner(map_data, row, right_col) or not self.deadspace[right_col][row]:
                             continue
@@ -262,18 +218,13 @@ class SokoBot:
                             continue
 
                         bottom_row = row
-                        while bottom_row < height - 1 and map_data[col][bottom_row+1] != "#" and (map_data[col-1][bottom_row] == "#" or map_data[col+1][bottom_row] == "#") and map_data[col][bottom_row] != ".":
+                        while bottom_row < width - 1 and map_data[col][bottom_row+1] != "#" and (map_data[col-1][bottom_row] == "#" or map_data[col+1][bottom_row] == "#") and map_data[col][bottom_row] != ".":
                             bottom_row += 1
                         if not self.is_block_corner(map_data, bottom_row, col) or not self.deadspace[col][bottom_row]:
                             continue
 
                         for current_row in range (top_row, bottom_row + 1):
                             self.deadspace[col][current_row] = True
-
-        end_time = perf_counter()
-        total_time = end_time - start_time
-        #print(f"Deadlock Execution Time: {total_time:.6f} seconds")
-
 
 
 
