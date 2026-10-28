@@ -2,6 +2,22 @@ from src.solver.graph import SokBotGraph
 import networkx as nx
 import src.gui.game
 from time import perf_counter
+from functools import wraps
+
+# Benchmark
+def benchmark(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = perf_counter()
+        result = func(*args, **kwargs)
+        end_time = perf_counter()
+
+        execution_time = end_time - start_time
+        print(f"[{func.__name__}] Executed in {execution_time:.6f} seconds")
+
+        return result
+    return wrapper
+
 
 class State:
     def __init__(self, player_pos: tuple[int, int], boxes_pos: list[(int, int)]):
@@ -173,7 +189,7 @@ class SokoBot:
         self.deadspace = [[False for _ in range (len(map_data[c]))] for c in range(len(map_data))]
 
         for col in range(len(map_data)):
-            for row in range(len(map_data[col])): 
+            for row in range(len(map_data[col])):
                 if self.deadspace[col][row]:
                     continue
                 if map_data[col][row] == "#":
