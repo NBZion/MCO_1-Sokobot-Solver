@@ -1,6 +1,7 @@
 from src.solver.graph import SokBotGraph
+import heapq
+import itertools
 import networkx as nx
-import src.gui.game
 from time import perf_counter
 from functools import wraps
 
@@ -22,18 +23,19 @@ def benchmark(func):
 class State:
     def __init__(self, player_pos: tuple[int, int], boxes_pos: list[(int, int)]):
         self.player_pos = player_pos
-        self.boxes_pos = boxes_pos
+        self.boxes_pos = tuple(sorted(boxes_pos))
 
     def redefineBoxes(self, new_boxes_pos: list[(int, int)]):
         self.boxes_pos = new_boxes_pos
 
     def __eq__(self, other):
+        if not isinstance(other, State): return False
         return self.player_pos == other.player_pos and self.boxes_pos == other.boxes_pos
 
     def __hash__(self):
         return hash((
             self.player_pos,
-            tuple(sorted(self.boxes_pos))
+            self.boxes_pos
         ))
 
 
@@ -44,21 +46,35 @@ class Node:
         self.h = h # Heuristic
         self.p = p # Path
 
+
+
 class SokoBot:
 
     def __init__(self):
         self.minimum_distance_goals = {} # stores the distance from each in the map to every goal
+        #self.manhattan_distance_goals = {}
         self.visited_states = {} # stores visited states
         self.frontier = [] # stores frontier nodes
+        self.counter = itertools.count()
+        self.best_g = {}
 
         self.goals_pos = [] # stores every goal's position in the map
         self.deadspace = []
 
 
 
-
     def solveSokobanPuzzle(self, width, height, mapData, itemsData):
-        # Initialize SokoBot graph
+        # Reinitialize Variables and  SokoBot graph
+
+        self.minimum_distance_goals = {} # stores the distance from each in the map to every goal
+        self.manhattan_distance_goals = {}
+        self.visited_states = {} # stores visited states
+        self.frontier = [] # stores frontier nodes
+        self.best_g = {}
+        heapq.heapify(self.frontier)
+        self.goals_pos = [] # stores every goal's position in the map
+        self.deadspace = []
+
         graph = SokBotGraph()
         graph.convertDataToGraph(mapData, itemsData)
 
@@ -82,15 +98,11 @@ class SokoBot:
         for col in range(len(mapData)):
             for row in range(len(mapData[col])):
                 if(mapData[col][row] == '.'):
-                    print("--")
                     self.goals_pos.append((col, row))
-                print(mapData[col][row]);
 
 
         # For every goal position, get the minimum distance from each position in the graph
-        g = 0
         for goal in self.goals_pos:
-            g += 1
             self.minimum_distance_goals[goal] = graph.getHue_bfs((goal[0], goal[1]))
 
         # Set initial states and starting node
@@ -103,9 +115,14 @@ class SokoBot:
 
     # 2. Start Exploring the Different States
         while self.frontier:
-            start_time = perf_counter()
-            node = self.frontier.pop(0)
+            #node = self.frontier.pop(0)
+            _, _, node = heapq.heappop(self.frontier)
             state = node.state
+
+            if node.g != self.best_g[state]: continue
+
+            print(state.player_pos)
+            print(state.boxes_pos)
 
             if self.__checkGoal(state, mapData):
                 print("Successful!")
@@ -117,7 +134,7 @@ class SokoBot:
             for dx, dy, dp in [(1, 0, 'd'), (-1, 0, 'u'), (0, 1, 'r'), (0, -1, 'l')]:
                 # TODO: Check if tile is out of bounds or an impassable object
                 new_player_pos = (state.player_pos[0] + dx, state.player_pos[1] + dy)
-                new_boxes_pos = state.boxes_pos.copy()
+                new_boxes_pos = list(state.boxes_pos)
 
                 if 0 <= new_player_pos[0] < height and 0 <= new_player_pos[1] < width and mapData[new_player_pos[0]][new_player_pos[1]] != '#':
                     if new_player_pos in new_boxes_pos:
@@ -130,6 +147,7 @@ class SokoBot:
                             continue
                     new_state = State(new_player_pos, new_boxes_pos)
                     new_node = Node(new_state, node.g + 1, self.__get_h_of_state(new_boxes_pos), node.p + dp)
+                    #if new_state in self.visited_states: continue # Skip the state
                     self.__insertToFrontier(new_node)
 
 
@@ -138,22 +156,31 @@ class SokoBot:
 
 
 
-
+    #@benchmark
     def __insertToFrontier(self, node: Node):
-        # GO THROUGH STATES
-        sorted_boxes_pos = sorted(node.state.boxes_pos)
-        node.state.redefineBoxes(sorted_boxes_pos)
 
-        if node.state in self.visited_states: return
+        state = node.state
+
+        if node.g >= self.best_g.get(state, float('inf')): return
+        self.best_g[state] = node.g
+
+        self.visited_states.pop(state, None)
+
+
 
         f = node.g + node.h
 
+        heapq.heappush(
+            self.frontier,
+            (f, next(self.counter), node)
+        )
+
         # Find a node with a greater f value to place the value at
-        for n in range(len(self.frontier)):
-            if self.frontier[n].h + self.frontier[n].g > f:
-                self.frontier.insert(n, node)
-                return
-        self.frontier.append(node)
+        # for n in range(len(self.frontier)):
+        #     if self.frontier[n].h + self.frontier[n].g > f:
+        #         self.frontier.insert(n, node)
+        #         return
+        # self.frontier.append(node)
 
         return
 
@@ -163,11 +190,21 @@ class SokoBot:
     def __get_h_of_state(self, boxes_pos):
         h = 0
         for box_pos in boxes_pos:
-            h += min([self.minimum_distance_goals[goal_pos][box_pos] for goal_pos in self.goals_pos])
+            distances = [
+                self.minimum_distance_goals[goal_pos].get(box_pos) 
+                for goal_pos in self.goals_pos
+            ]
+
+            reachable_distances = [
+                d for d in distances
+                if d is not None
+            ]
+
+            if not reachable_distances: return float("inf")
+            h += min(reachable_distances)
             pass
 
         return h
-
 
 
 
@@ -188,6 +225,7 @@ class SokoBot:
     def load_map_deadspace (self, map_data, width, height):
         self.deadspace = [[False for _ in range (len(map_data[c]))] for c in range(len(map_data))]
 
+        # CHECKS FOR DEAD CORNERS
         for col in range(len(map_data)):
             for row in range(len(map_data[col])):
                 if self.deadspace[col][row]:
@@ -199,6 +237,7 @@ class SokoBot:
                 elif row > 0 and col > 0 and row < width - 1 and col < height - 1 and self.is_block_corner(map_data, row, col) and map_data[col][row] != ".":
                     self.deadspace[col][row] = True
 
+        # CHECKS FOR DEADLOCK ZONESs
         for col in range(len(map_data)):
             for row in range(len(map_data[col])):
                 if(map_data[col][row] == "#" or map_data[col][row] == "."):
